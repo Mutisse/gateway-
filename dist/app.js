@@ -47,20 +47,15 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, helmet_1.default)());
 app.use((0, compression_1.default)());
 // Morgan configurado para desenvolvimento
-if (process.env.NODE_ENV === "development") {
-    app.use((0, morgan_1.default)((tokens, req, res) => {
-        const status = tokens.status(req, res);
-        const statusColor = status >= 400 ? chalk_1.default.red : status >= 300 ? chalk_1.default.yellow : chalk_1.default.green;
-        return [
-            chalk_1.default.gray(`[${new Date().toISOString()}]`),
-            chalk_1.default.blue(tokens.method(req, res)),
-            tokens.url(req, res),
-            statusColor(status),
-            chalk_1.default.magenta(tokens['response-time'](req, res) + 'ms'),
-            chalk_1.default.cyan(tokens.res(req, res, 'content-length') + 'b')
-        ].join(' ');
-    }));
-}
+app.use((0, morgan_1.default)((tokens, req, res) => {
+    return [
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'), '-',
+        tokens['response-time'](req, res), 'ms'
+    ].join(' ');
+}));
 // Prefixo /api para todas as rotas
 app.use("/", index_route_1.default);
 // Middleware para rotas não encontradas

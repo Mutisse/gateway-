@@ -11,7 +11,7 @@ router.use((req, res, next) => {
 // Função de proxy genérica
 const createProxyHandler = (service) => async (req, res) => {
     const startTime = Date.now();
-    const path = req.originalUrl.replace(/^\/api\/[^/]+\//, '/');
+    const path = req.originalUrl.replace(/^\/api\/[^/]+\//, "/");
     try {
         const response = await service({
             method: req.method,
@@ -21,23 +21,21 @@ const createProxyHandler = (service) => async (req, res) => {
             headers: {
                 ...req.headers,
                 host: undefined,
-                'x-forwarded-for': req.ip,
-                'x-request-id': req.headers['x-request-id'] || `req_${Date.now()}`
-            }
+                "x-forwarded-for": req.ip,
+                "x-request-id": req.headers["x-request-id"] || `req_${Date.now()}`,
+            },
         });
-        res.status(response.status)
-            .set(response.headers)
-            .json(response.data);
+        res.status(response.status).set(response.headers).json(response.data);
     }
     catch (error) {
-        const status = error.status === 'NO_RESPONSE' ? 504 : error.status || 502;
-        console.error('[Proxy Error Details]', {
+        const status = error.status === "NO_RESPONSE" ? 504 : error.status || 502;
+        console.error("[Proxy Error Details]", {
             timestamp: new Date().toISOString(),
             service: service.defaults.baseURL,
             path,
             errorCode: error.code,
             originalError: error.message,
-            duration: `${Date.now() - startTime}ms`
+            duration: `${Date.now() - startTime}ms`,
         });
         res.status(status).json({
             error: "Service Communication Error",
@@ -45,9 +43,9 @@ const createProxyHandler = (service) => async (req, res) => {
             details: {
                 service: service.defaults.baseURL,
                 endpoint: path,
-                errorCode: error.code
+                errorCode: error.code,
             },
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         });
     }
 };
@@ -65,20 +63,20 @@ router.patch("/images/update-urls", async (req, res) => {
             return res.status(400).json({
                 error: "Invalid Request",
                 message: "URLs array is required",
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
             });
         }
         if (!entityType || !entityId) {
             return res.status(400).json({
                 error: "Invalid Request",
                 message: "entityType and entityId are required",
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
             });
         }
         const response = await proxies_config_1.proxies.images.patch("/update-urls", {
             urls,
             entityType,
-            entityId
+            entityId,
         });
         res.status(response.status).json(response.data);
     }
@@ -87,7 +85,7 @@ router.patch("/images/update-urls", async (req, res) => {
             error: "Image Update Failed",
             message: (0, proxies_config_1.getErrorMessage)(error.code),
             details: error.message,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         });
     }
 });
@@ -99,7 +97,7 @@ router.get("/health", async (req, res) => {
             status: "Gateway is healthy",
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
-            services
+            services,
         });
     }
     catch (error) {
@@ -107,7 +105,7 @@ router.get("/health", async (req, res) => {
             status: "Gateway is unhealthy",
             error: (0, proxies_config_1.getErrorMessage)(error.code),
             details: error.message,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         });
     }
 });
