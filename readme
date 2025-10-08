@@ -1,0 +1,12 @@
+gateway/
+├── src/
+│   ├── routes/
+│   │   └── index.ts
+│   ├── middlewares/
+│   │   └── auth.middleware.ts
+│   ├── utils/
+│   ├── app.ts
+│   └── server.ts
+├── package.json
+├── tsconfig.json
+├── .env
