@@ -28,20 +28,30 @@ const log = {
     ),
 };
 
-const allowedOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173")
-  .split(",")
-  .map((origin) => origin.trim());
+// ✅ ORIGENS ESPECÍFICAS: Apenas localhost:9000 e Netlify
+const allowedOrigins = [
+  "http://localhost:9000",
+  "https://beautytime-frontend.netlify.app"
+];
 
-// Configuração de CORS melhorada
+// ✅ CORS RESTRITO: Apenas as origens permitidas
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        log.error("CORS bloqueado para origem:", origin);
-        callback(new Error("Not allowed by CORS"));
+      // Permitir requisições sem origin (mobile apps, etc)
+      if (!origin) {
+        return callback(null, true);
       }
+      
+      // Verificar se a origem está na lista de permitidas
+      if (allowedOrigins.includes(origin)) {
+        log.info("CORS permitido para:", origin);
+        return callback(null, true);
+      }
+      
+      // Bloquear todas as outras origens
+      log.error("CORS bloqueado para origem não permitida:", origin);
+      callback(new Error(`Origem ${origin} não permitida por CORS`));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -51,10 +61,17 @@ app.use(
       "x-request-id",
       "X-Service-Name",
       "X-Forwarded-For",
+      "Accept",
+      "Origin",
     ],
     exposedHeaders: ["x-request-id"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   })
 );
+
+// Middleware para tratar preflight OPTIONS
+app.options('*', cors());
 
 // Middlewares essenciais
 app.use(express.json({ limit: process.env.MAX_REQUEST_SIZE || "10mb" }));
@@ -76,6 +93,16 @@ app.use(
     ].join(" ");
   }) as any)
 );
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    allowedOrigins: allowedOrigins // ✅ Mostra as origens permitidas
+  });
+});
 
 // Prefixo /api para todas as rotas
 app.use("/", routes);
