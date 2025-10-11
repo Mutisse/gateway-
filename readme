@@ -1,12 +1,20 @@
 gateway/
-├── src/
-│   ├── routes/
-│   │   └── index.ts
-│   ├── middlewares/
-│   │   └── auth.middleware.ts
-│   ├── utils/
-│   ├── app.ts
-│   └── server.ts
+├── 📁 src/
+│   ├── 📁 routes/
+│   │   ├── auth.routes.ts
+│   │   ├── users.routes.ts
+│   │   ├── scheduling.routes.ts
+│   │   └── services.routes.ts
+│   ├── 📁 middleware/
+│   │   ├── auth.middleware.ts
+│   │   ├── rate-limiting.middleware.ts
+│   │   ├── logging.middleware.ts
+│   │   └── error-handler.middleware.ts
+│   ├── 📁 utils/
+│   │   ├── http-client.ts
+│   │   ├── service-discovery.ts
+│   │   └── config.ts
+│   └── app.ts
 ├── package.json
-├── tsconfig.json
-├── .env
+├── dockerfile
+└── .env
