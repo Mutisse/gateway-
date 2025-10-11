@@ -1,5 +1,8 @@
 import { exec } from "child_process";
 import { promisify } from "util";
+import * as net from 'net'; // ADICIONE ESTA LINHA NO TOPO
+
+// O código que usa 'net' deve funcionar agora
 
 const execAsync = promisify(exec);
 

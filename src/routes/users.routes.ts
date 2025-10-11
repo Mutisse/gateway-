@@ -43,8 +43,10 @@ router.get('/users/public-info', async (req, res) => {
 // 🎯 ROTAS DE USUÁRIO (PROTEGIDAS - COM requireAuth)
 router.get('/users/me', requireAuth, async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    
     const result = await serviceCommunicator.get('AUTH_USERS_SERVICE', '/users/me', {
-      'Authorization': req.headers.authorization
+      'Authorization': authHeader || '' // ✅ Corrigido: garante que sempre será string
     });
     
     res.status(result.statusCode).json({
@@ -65,8 +67,10 @@ router.get('/users/me', requireAuth, async (req, res) => {
 // 🎯 ROTAS DE ADMIN (PROTEGIDAS)
 router.get('/users', requireAuth, async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    
     const result = await serviceCommunicator.get('AUTH_USERS_SERVICE', '/users', {
-      'Authorization': req.headers.authorization
+      'Authorization': authHeader || '' // ✅ Corrigido: garante que sempre será string
     });
     
     res.status(result.statusCode).json({
