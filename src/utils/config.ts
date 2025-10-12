@@ -1,14 +1,11 @@
 export const SERVICE_CONFIG = {
-  AUTH_USERS_SERVICE:
-    process.env.AUTH_USERS_SERVICE_URL || "http://localhost:3001",
-  SCHEDULING_SERVICE:
-    process.env.SCHEDULING_SERVICE_URL || "http://localhost:3002",
-  EMPLOYEES_SERVICE:
-    process.env.EMPLOYEES_SERVICE_URL || "http://localhost:3003",
-  SALONS_SERVICE: process.env.SALONS_SERVICE_URL || "http://localhost:3004",
-  PAYMENTS_SERVICE: process.env.PAYMENTS_SERVICE_URL || "http://localhost:3005",
-  NOTIFICATIONS_SERVICE:
-    process.env.NOTIFICATIONS_SERVICE_URL || "http://localhost:3006",
+  AUTH_USERS_SERVICE: process.env.AUTH_USERS_SERVICE_URL || "https://auth-users-service.onrender.com",
+  SCHEDULING_SERVICE: process.env.SCHEDULING_SERVICE_URL || "http://localhost:3002",
+  EMPLOYEES_SERVICE: process.env.EMPLOYEES_SERVICE_URL || "http://localhost:3003",
+  // Para serviços não implementados, use uma URL que retorna 200
+  SALONS_SERVICE: process.env.SALONS_SERVICE_URL || "https://httpstat.us/200",
+  PAYMENTS_SERVICE: process.env.PAYMENTS_SERVICE_URL || "https://httpstat.us/200",
+  NOTIFICATIONS_SERVICE: process.env.NOTIFICATIONS_SERVICE_URL || "https://httpstat.us/200",
 } as const;
 
 export const GATEWAY_CONFIG = {

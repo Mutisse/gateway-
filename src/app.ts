@@ -40,7 +40,7 @@ const log = {
 // ✅ ORIGENS PERMITIDAS
 const allowedOrigins = [
   "http://localhost:9000",
-  "https://beautytime-frontend.netlify.app",
+ // "https://beautytime-frontend.netlify.app",
   "http://localhost:3000", // Adicionado para desenvolvimento
   "http://localhost:8080", // Gateway itself
 ];

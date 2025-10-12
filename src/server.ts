@@ -12,7 +12,7 @@ const log = {
     ),
   error: (message: string, error?: any) =>
     console.error(
-      chalk.gray(`[new Date().toISOString()}]`),
+      chalk.gray(`[${new Date().toISOString()}]`),
       chalk.red(message),
       error
         ? chalk.red(
@@ -72,48 +72,6 @@ const encontrarPortaDisponivel = (
   });
 };
 
-// 🎯 FUNÇÃO PARA MATAR PROCESSO NA PORTA (OPCIONAL)
-const matarProcessoNaPorta = async (porta: number): Promise<boolean> => {
-  try {
-    const { exec } = require("child_process");
-    const { promisify } = require("util");
-    const execAsync = promisify(exec);
-
-    if (process.platform === "win32") {
-      // Windows
-      const { stdout } = await execAsync(`netstat -ano | findstr :${porta}`);
-      const lines = stdout.split("\n");
-
-      for (const line of lines) {
-        const match = line.match(/:${porta}.*LISTENING\\s+(\\d+)/);
-        if (match) {
-          const pid = match[1];
-          await execAsync(`taskkill /PID ${pid} /F`);
-          log.success(`Processo ${pid} na porta ${porta} finalizado`);
-          return true;
-        }
-      }
-    } else {
-      // Linux/Mac
-      const { stdout } = await execAsync(`lsof -i :${porta} -t`);
-      const pids = stdout.trim().split("\n");
-
-      for (const pid of pids) {
-        if (pid) {
-          await execAsync(`kill -9 ${pid}`);
-          log.success(`Processo ${pid} na porta ${porta} finalizado`);
-          return true;
-        }
-      }
-    }
-
-    return false;
-  } catch (error) {
-    log.info(`Nenhum processo encontrado na porta ${porta}`);
-    return false;
-  }
-};
-
 async function startServer() {
   const PORTA_PADRAO = Number(process.env.PORT) || 8080;
   const HOST = process.env.HOST || "0.0.0.0";
@@ -140,11 +98,33 @@ async function startServer() {
       );
       console.log(`🏠 ${chalk.cyan("Host:")} ${chalk.yellow(HOST)}`);
 
-      console.log(`\n📊 ${chalk.cyan("Endpoints disponíveis:")}`);
+      console.log(`\n📊 ${chalk.cyan("ENDPOINTS DISPONÍVEIS:")}`);
+
+      console.log(`\n${chalk.yellow("🏠 ROTAS PRINCIPAIS")}`);
       console.log(
         `   ❤️  ${chalk.green(
           "Health:"
         )} http://localhost:${portaDisponivel}/health`
+      );
+      console.log(
+        `   🏠 ${chalk.green("Welcome:")} http://localhost:${portaDisponivel}/`
+      );
+      console.log(
+        `   ℹ️  ${chalk.green(
+          "API Info:"
+        )} http://localhost:${portaDisponivel}/api/info`
+      );
+      console.log(
+        `   📊 ${chalk.green(
+          "API Status:"
+        )} http://localhost:${portaDisponivel}/api/status`
+      );
+
+      console.log(`\n${chalk.yellow("🩺 DIAGNÓSTICO & MONITORAMENTO")}`);
+      console.log(
+        `   🩺 ${chalk.green(
+          "Full Diagnostic:"
+        )} http://localhost:${portaDisponivel}/api/diagnostic/full`
       );
       console.log(
         `   🔍 ${chalk.green(
@@ -152,20 +132,66 @@ async function startServer() {
         )} http://localhost:${portaDisponivel}/api/services/health`
       );
       console.log(
+        `   📈 ${chalk.green(
+          "System Status:"
+        )} http://localhost:${portaDisponivel}/api/diagnostic/status`
+      );
+
+      console.log(`\n${chalk.yellow("🔄 PING PARA MICROSERVIÇOS")}`);
+      console.log(
         `   👥 ${chalk.green(
           "Users Ping:"
         )} http://localhost:${portaDisponivel}/api/ping/users`
       );
       console.log(
-        `   🎯 ${chalk.green(
-          "Test Register:"
-        )} http://localhost:${portaDisponivel}/api/test/register`
+        `   📅 ${chalk.green(
+          "Scheduling Ping:"
+        )} http://localhost:${portaDisponivel}/api/ping/scheduling`
       );
       console.log(
-        `   🩺 ${chalk.green(
-          "Diagnostic:"
-        )} http://localhost:${portaDisponivel}/api/diagnostic/full`
+        `   💼 ${chalk.green(
+          "Employees Ping:"
+        )} http://localhost:${portaDisponivel}/api/ping/employees`
       );
+      console.log(
+        `   🏢 ${chalk.green(
+          "Salons Ping:"
+        )} http://localhost:${portaDisponivel}/api/ping/salons`
+      );
+      console.log(
+        `   💰 ${chalk.green(
+          "Payments Ping:"
+        )} http://localhost:${portaDisponivel}/api/ping/payments`
+      );
+      console.log(
+        `   🔄 ${chalk.green(
+          "All Services Ping:"
+        )} http://localhost:${portaDisponivel}/api/ping/all`
+      );
+
+      // No console.log das rotas disponíveis, adicione:
+      console.log(`\n${chalk.yellow("🧪 ROTAS DE TESTE")}`);
+      console.log(
+        `   🔧 ${chalk.green(
+          "Test Connection:"
+        )} http://localhost:${portaDisponivel}/api/test/connection`
+      );
+      console.log(
+        `   🌐 ${chalk.green(
+          "Test Microservices:"
+        )} http://localhost:${portaDisponivel}/api/test/microservices-connection`
+      );
+      console.log(
+        `   🔐 ${chalk.green(
+          "Test Auth Service:"
+        )} http://localhost:${portaDisponivel}/api/test/auth-service-connection`
+      );
+      console.log(
+        `   ⚡ ${chalk.green(
+          "Test Performance:"
+        )} http://localhost:${portaDisponivel}/api/test/performance`
+      );
+
       console.log(
         `\n🚀 ${chalk.green("Gateway pronto para receber requisições!")}\n`
       );
