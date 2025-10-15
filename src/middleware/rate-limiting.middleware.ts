@@ -1,34 +1,41 @@
-import rateLimit from 'express-rate-limit';
-import { GATEWAY_CONFIG } from '../utils/config';
+import rateLimit from "express-rate-limit";
 
-export const globalRateLimit = rateLimit({
-  windowMs: GATEWAY_CONFIG.RATE_LIMIT_WINDOW_MS,
-  max: GATEWAY_CONFIG.RATE_LIMIT_MAX_REQUESTS,
+// ✅ CORREÇÃO: Usar valores diretos ou importar config corretamente
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
+const RATE_LIMIT_MAX_REQUESTS = 100;
+
+// 🔐 Rate limiting para autenticação
+export const authRateLimit = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX_REQUESTS,
   message: {
     success: false,
-    error: 'Too many requests, please try again later',
-    code: 'RATE_LIMITED'
+    error: "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 
-export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
-  message: {
-    success: false,
-    error: 'Too many authentication attempts, please try again later',
-    code: 'AUTH_RATE_LIMITED'
-  }
-});
-
+// 📧 Rate limiting para OTP
 export const otpRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 3, // Limit each IP to 3 OTP requests per minute
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: 5, // Apenas 5 tentativas de OTP por 15 minutos
   message: {
     success: false,
-    error: 'Too many OTP requests, please try again later',
-    code: 'OTP_RATE_LIMITED'
-  }
+    error: "Muitas tentativas de OTP. Tente novamente em 15 minutos.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 🌐 Rate limiting geral para API
+export const apiRateLimit = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX_REQUESTS,
+  message: {
+    success: false,
+    error: "Muitas requisições. Tente novamente em 15 minutos.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });

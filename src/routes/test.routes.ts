@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { serviceCommunicator } from "../utils/service-communicator";
 
 const router = Router();
 

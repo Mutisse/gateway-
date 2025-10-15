@@ -16,11 +16,31 @@ export class HttpClient {
         }
       });
 
+      // Add request interceptor for logging
+      client.interceptors.request.use(
+        (config) => {
+          console.log(`🚀 Gateway → ${serviceName}: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+          return config;
+        },
+        (error) => {
+          console.error(`❌ Gateway request error to ${serviceName}:`, error.message);
+          return Promise.reject(error);
+        }
+      );
+
       // Add response interceptor for error handling
       client.interceptors.response.use(
-        (response) => response,
+        (response) => {
+          console.log(`✅ Gateway ← ${serviceName}: ${response.status} ${response.statusText}`);
+          return response;
+        },
         (error) => {
-          console.error(`Service ${serviceName} error:`, error.message);
+          console.error(`❌ Gateway response error from ${serviceName}:`, {
+            message: error.message,
+            url: error.config?.url,
+            status: error.response?.status,
+            data: error.response?.data
+          });
           throw error;
         }
       );
@@ -68,3 +88,4 @@ export class HttpClient {
 }
 
 export const httpClient = new HttpClient();
+

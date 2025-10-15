@@ -81,117 +81,35 @@ async function startServer() {
     const portaDisponivel = await encontrarPortaDisponivel(PORTA_PADRAO);
 
     const server = app.listen(portaDisponivel, HOST, () => {
-      console.log(
-        `\n🎉 ${chalk.green("BeautyTime Gateway iniciado com sucesso!")}`
-      );
-      console.log(
-        `📍 ${chalk.cyan("Porta:")} ${chalk.yellow(portaDisponivel)} ${
-          portaDisponivel !== PORTA_PADRAO
-            ? chalk.gray(`(original ${PORTA_PADRAO} estava ocupada)`)
-            : ""
-        }`
-      );
-      console.log(
-        `🌐 ${chalk.cyan("Ambiente:")} ${chalk.yellow(
-          process.env.NODE_ENV || "development"
-        )}`
-      );
-      console.log(`🏠 ${chalk.cyan("Host:")} ${chalk.yellow(HOST)}`);
+      // ✅ CORREÇÃO: Usar portaDisponivel em vez de PORT
+      console.log(`
+📊 ENDPOINTS DISPONÍVEIS:
 
-      console.log(`\n📊 ${chalk.cyan("ENDPOINTS DISPONÍVEIS:")}`);
+🏠 ROTAS PRINCIPAIS
+   ❤️  Health: http://localhost:${portaDisponivel}/api/health
+   🏠 Welcome: http://localhost:${portaDisponivel}/
+   ℹ️  API Info: http://localhost:${portaDisponivel}/api/info
+   📊 API Status: http://localhost:${portaDisponivel}/api/status
 
-      console.log(`\n${chalk.yellow("🏠 ROTAS PRINCIPAIS")}`);
-      console.log(
-        `   ❤️  ${chalk.green(
-          "Health:"
-        )} http://localhost:${portaDisponivel}/health`
-      );
-      console.log(
-        `   🏠 ${chalk.green("Welcome:")} http://localhost:${portaDisponivel}/`
-      );
-      console.log(
-        `   ℹ️  ${chalk.green(
-          "API Info:"
-        )} http://localhost:${portaDisponivel}/api/info`
-      );
-      console.log(
-        `   📊 ${chalk.green(
-          "API Status:"
-        )} http://localhost:${portaDisponivel}/api/status`
-      );
+🩺 DIAGNÓSTICO GATEWAY
+   🔍 Gateway Status: http://localhost:${portaDisponivel}/api/diagnostic/gateway-status
+   ⚡ Performance: http://localhost:${portaDisponivel}/api/diagnostic/gateway-performance
+   ⚙️ Configuração: http://localhost:${portaDisponivel}/api/diagnostic/gateway-config
+   📋 Rotas: http://localhost:${portaDisponivel}/api/diagnostic/gateway-routes
 
-      console.log(`\n${chalk.yellow("🩺 DIAGNÓSTICO & MONITORAMENTO")}`);
-      console.log(
-        `   🩺 ${chalk.green(
-          "Full Diagnostic:"
-        )} http://localhost:${portaDisponivel}/api/diagnostic/full`
-      );
-      console.log(
-        `   🔍 ${chalk.green(
-          "Services Health:"
-        )} http://localhost:${portaDisponivel}/api/services/health`
-      );
-      console.log(
-        `   📈 ${chalk.green(
-          "System Status:"
-        )} http://localhost:${portaDisponivel}/api/diagnostic/status`
-      );
+👤 USER SERVICE
+   🩺 Health: http://localhost:${portaDisponivel}/api/user-service/health
+   📡 Ping: http://localhost:${portaDisponivel}/api/ping/users
+   🧪 Teste Conexão: http://localhost:${portaDisponivel}/api/test/auth-service-connection
+   📊 Info: http://localhost:${portaDisponivel}/api/user-service/info
 
-      console.log(`\n${chalk.yellow("🔄 PING PARA MICROSERVIÇOS")}`);
-      console.log(
-        `   👥 ${chalk.green(
-          "Users Ping:"
-        )} http://localhost:${portaDisponivel}/api/ping/users`
-      );
-      console.log(
-        `   📅 ${chalk.green(
-          "Scheduling Ping:"
-        )} http://localhost:${portaDisponivel}/api/ping/scheduling`
-      );
-      console.log(
-        `   💼 ${chalk.green(
-          "Employees Ping:"
-        )} http://localhost:${portaDisponivel}/api/ping/employees`
-      );
-      console.log(
-        `   🏢 ${chalk.green(
-          "Salons Ping:"
-        )} http://localhost:${portaDisponivel}/api/ping/salons`
-      );
-      console.log(
-        `   💰 ${chalk.green(
-          "Payments Ping:"
-        )} http://localhost:${portaDisponivel}/api/ping/payments`
-      );
-      console.log(
-        `   🔄 ${chalk.green(
-          "All Services Ping:"
-        )} http://localhost:${portaDisponivel}/api/ping/all`
-      );
+🔐 AUTENTICAÇÃO
+   👤 Registro: http://localhost:${portaDisponivel}/api/auth/register
+   🔐 Login: http://localhost:${portaDisponivel}/api/auth/login
+   📧 OTP Send: http://localhost:${portaDisponivel}/api/otp/send
+   ✅ OTP Verify: http://localhost:${portaDisponivel}/api/otp/verify
 
-      // No console.log das rotas disponíveis, adicione:
-      console.log(`\n${chalk.yellow("🧪 ROTAS DE TESTE")}`);
-      console.log(
-        `   🔧 ${chalk.green(
-          "Test Connection:"
-        )} http://localhost:${portaDisponivel}/api/test/connection`
-      );
-      console.log(
-        `   🌐 ${chalk.green(
-          "Test Microservices:"
-        )} http://localhost:${portaDisponivel}/api/test/microservices-connection`
-      );
-      console.log(
-        `   🔐 ${chalk.green(
-          "Test Auth Service:"
-        )} http://localhost:${portaDisponivel}/api/test/auth-service-connection`
-      );
-      console.log(
-        `   ⚡ ${chalk.green(
-          "Test Performance:"
-        )} http://localhost:${portaDisponivel}/api/test/performance`
-      );
-
+`);
       console.log(
         `\n🚀 ${chalk.green("Gateway pronto para receber requisições!")}\n`
       );
