@@ -1,6 +1,6 @@
 export const SERVICE_CONFIG = {
   AUTH_USERS_SERVICE:
-    process.env.AUTH_USERS_SERVICE_URL || "http://localhost:3001/UserService",
+    process.env.AUTH_USERS_SERVICE_URL || "https://auth-users-service.onrender.com",
   SCHEDULING_SERVICE:
     process.env.SCHEDULING_SERVICE_URL || "http://localhost:3002",
   EMPLOYEES_SERVICE:
