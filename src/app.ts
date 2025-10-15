@@ -37,32 +37,52 @@ const log = {
     ),
 };
 
-// ✅ ORIGENS PERMITIDAS
+// ✅ ORIGENS PERMITIDAS - ATUALIZADA E COMPLETA
 const allowedOrigins = [
-  //"http://localhost:9000",
-  "https://beautytime-frontend.netlify.app",
-  "http://localhost:3000", // Adicionado para desenvolvimento
-  "http://localhost:8080", // Gateway itself
+  "https://beautytimeplatformapp.netlify.app", // ✅ SEU FRONTEND CORRETO
+  //"http://localhost:3000", // ✅ LOCALHOST REACT
+  //"http://localhost:5173", // ✅ LOCALHOST VITE
+  //"http://localhost:8080", // ✅ GATEWAY LOCAL
+  "https://gateway-6rov.onrender.com", // ✅ SEU GATEWAY NO RENDER
+  //"https://beautytime-platform.vercel.app", // ✅ VERCELL SE TIVER
 ];
 
-// ✅ CORS CONFIGURADO CORRETAMENTE
+// ✅ CORS CONFIGURADO CORRETAMENTE - SOLUÇÃO ROBUSTA
 const corsOptions = {
   origin: (
     origin: string | undefined,
     callback: (err: Error | null, allow?: boolean) => void
   ) => {
-    // Permitir requisições sem origin (mobile apps, etc)
+    // ✅ PERMITIR REQUISIÇÕES SEM ORIGIN (MOBILE APPS, ETC)
     if (!origin) {
+      log.info("🌐 Requisição sem origin permitida");
       return callback(null, true);
     }
 
-    // Verificar se a origem está na lista de permitidas
+    // ✅ EM DESENVOLVIMENTO, PERMITIR TODAS AS ORIGENS
+    if (process.env.NODE_ENV === "development") {
+      log.info("🔓 Desenvolvimento: CORS permitido para:", origin);
+      return callback(null, true);
+    }
+
+    // ✅ VERIFICAR SE A ORIGEM ESTÁ NA LISTA DE PERMITIDAS
     if (allowedOrigins.includes(origin)) {
       log.info("✅ CORS permitido para:", origin);
       return callback(null, true);
     }
 
-    // Bloquear todas as outras origens
+    // ✅ VERIFICAR DOMÍNIOS NETLIFY DE FORMA FLEXÍVEL
+    const isNetlifyDomain = origin.includes("netlify.app");
+    const isVercelDomain = origin.includes("vercel.app");
+    const isLocalhost =
+      origin.includes("localhost") || origin.includes("127.0.0.1");
+
+    if (isNetlifyDomain || isVercelDomain || isLocalhost) {
+      log.info("✅ Domínio conhecido permitido:", origin);
+      return callback(null, true);
+    }
+
+    // ❌ BLOQUEAR ORIGENS NÃO PERMITIDAS
     log.error("❌ CORS bloqueado para origem não permitida:", origin);
     callback(new Error(`Origem ${origin} não permitida por CORS`));
   },
@@ -79,15 +99,44 @@ const corsOptions = {
     "X-Requested-With",
     "Access-Control-Request-Method",
     "Access-Control-Request-Headers",
+    "X-API-Key",
+    "Access-Control-Allow-Origin",
   ],
-  exposedHeaders: ["x-request-id"],
+  exposedHeaders: ["x-request-id", "x-total-count", "x-page", "x-per-page"],
   preflightContinue: false,
   optionsSuccessStatus: 204,
-  maxAge: 86400,
+  maxAge: 86400, // 24 horas
 };
 
 // ✅ APLIQUE O CORS APENAS UMA VEZ
 app.use(cors(corsOptions));
+
+// ✅ MIDDLEWARE PERSONALIZADO PARA HEADERS CORS ADICIONAIS
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  // Adicionar headers CORS para todas as respostas
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-API-Key"
+  );
+
+  // Responder imediatamente para requisições OPTIONS
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  next();
+});
 
 // 🎯 RATE LIMITING
 const globalRateLimit = rateLimit({
@@ -136,6 +185,7 @@ if (process.env.NODE_ENV === "development") {
     log.info(`📨 ${req.method} ${req.path}`, {
       origin: req.headers.origin,
       ip: req.ip,
+      userAgent: req.headers["user-agent"],
     });
     next();
   });
@@ -150,6 +200,28 @@ app.get("/health", (req, res) => {
     environment: process.env.NODE_ENV || "development",
     version: "1.0.0",
     allowedOrigins: allowedOrigins,
+    cors: {
+      enabled: true,
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    },
+  });
+});
+
+// 🎯 ENDPOINT PARA VERIFICAR CORS
+app.get("/api/cors-info", (req, res) => {
+  const origin = req.headers.origin;
+  const isAllowed = origin ? allowedOrigins.includes(origin) : false;
+
+  res.status(200).json({
+    success: true,
+    data: {
+      yourOrigin: origin,
+      isAllowed: isAllowed,
+      allowedOrigins: allowedOrigins,
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
@@ -226,6 +298,20 @@ app.get("/api/ping/users", async (req, res) => {
   }
 });
 
+// 🎯 ENDPOINT DE TESTE CORS
+app.options("/api/cors-test", cors(corsOptions)); // Preflight
+app.post("/api/cors-test", (req, res) => {
+  res.json({
+    success: true,
+    message: "✅ CORS funcionando corretamente!",
+    data: {
+      origin: req.headers.origin,
+      method: req.method,
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
 // Prefixo /api para todas as rotas
 app.use("/", routes);
 
@@ -260,6 +346,7 @@ app.use(
         allowedOrigins: allowedOrigins,
         timestamp: new Date().toISOString(),
         code: "CORS_ERROR",
+        suggestion: "Verifique se a origem está na lista de origens permitidas",
       });
     }
 
@@ -273,5 +360,8 @@ app.use(
     });
   }
 );
+
+// ✅ EXPORT PARA VARIÁVEIS DE AMBIENTE
+export { allowedOrigins, corsOptions };
 
 export default app;
