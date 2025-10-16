@@ -248,4 +248,26 @@ router.get("/", (req, res) => {
   });
 });
 
+// Roteamento para Analytics Service - CENTRO DE INTELIGÊNCIA
+router.use('/analytics', createProxyMiddleware({
+  target: 'http://localhost:3004',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/analytics': '/api/analytics'
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      console.log(`📊 [GATEWAY] Roteando para Centro de Inteligência (Analytics): ${req.method} ${req.url}`);
+    },
+    error: (err, req, res) => {
+      console.error('❌ [GATEWAY] Erro ao conectar com Centro de Inteligência:', err.message);
+      res.status(503).json({
+        success: false,
+        error: 'Centro de Inteligência indisponível',
+        code: 'ANALYTICS_SERVICE_DOWN'
+      });
+    }
+  }
+}));
+
 export default router;

@@ -109,6 +109,10 @@ async function startServer() {
    📧 OTP Send: http://localhost:${portaDisponivel}/api/otp/send
    ✅ OTP Verify: http://localhost:${portaDisponivel}/api/otp/verify
 
+🎯 DEBUG
+   🔍 Proxy Info: http://localhost:${portaDisponivel}/api/debug/proxy-info
+   🌐 CORS Info: http://localhost:${portaDisponivel}/api/cors-info
+
 `);
       console.log(
         `\n🚀 ${chalk.green("Gateway pronto para receber requisições!")}\n`

@@ -12,6 +12,9 @@ import { serviceCommunicator } from "./utils/service-communicator";
 
 const app = express();
 
+// ✅ SOLUÇÃO CRÍTICA: CONFIGURAR TRUST PROXY PARA RENDER.COM
+app.set("trust proxy", 1); // Confia no primeiro proxy
+
 // Configuração do logger com chalk
 const log = {
   info: (message: string, meta?: any) =>
@@ -60,7 +63,7 @@ const corsOptions = {
     }
 
     // ✅ EM DESENVOLVIMENTO, PERMITIR TODAS AS ORIGENS
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       log.info("🔓 Desenvolvimento: CORS permitido para:", origin);
       return callback(null, true);
     }
@@ -72,11 +75,12 @@ const corsOptions = {
     }
 
     // ✅ VERIFICAR DOMÍNIOS CONHECIDOS
-    const isNetlifyDomain = origin.includes('netlify.app');
-    const isVercelDomain = origin.includes('vercel.app');
-    const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
-    const isRenderDomain = origin.includes('render.com');
-    
+    const isNetlifyDomain = origin.includes("netlify.app");
+    const isVercelDomain = origin.includes("vercel.app");
+    const isLocalhost =
+      origin.includes("localhost") || origin.includes("127.0.0.1");
+    const isRenderDomain = origin.includes("render.com");
+
     if (isNetlifyDomain || isVercelDomain || isLocalhost || isRenderDomain) {
       log.info("✅ Domínio conhecido permitido:", origin);
       return callback(null, true);
@@ -101,51 +105,16 @@ const corsOptions = {
     "Access-Control-Request-Headers",
     "X-API-Key",
   ],
-  exposedHeaders: [
-    "x-request-id",
-    "x-total-count",
-    "x-page",
-    "x-per-page"
-  ],
+  exposedHeaders: ["x-request-id", "x-total-count", "x-page", "x-per-page"],
   preflightContinue: false,
   optionsSuccessStatus: 204,
   maxAge: 86400,
 };
 
-// ✅ MIDDLEWARE CORS GLOBAL - APLICAR ANTES DE TUDO
-app.use(cors(corsOptions));
-
-// ✅ MIDDLEWARE PARA TRATAR REQUISIÇÕES OPTIONS (PREFLIGHT) GLOBALMENTE
-app.options('*', cors(corsOptions));
-
-// ✅ MIDDLEWARE PERSONALIZADO PARA HEADERS CORS
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Adicionar headers CORS para todas as respostas
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  } else if (origin && process.env.NODE_ENV === 'development') {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, X-Requested-With');
-  
-  // ✅ TRATAR REQUISIÇÕES OPTIONS (PREFLIGHT) IMEDIATAMENTE
-  if (req.method === 'OPTIONS') {
-    log.info("🛫 Preflight OPTIONS request para:", req.path);
-    return res.status(200).end();
-  }
-  
-  next();
-});
-
-// 🎯 RATE LIMITING
+// ✅ RATE LIMITING CONFIGURADO CORRETAMENTE COM PROXY - TIPAGEM CORRIGIDA
 const globalRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // limite de 100 requisições por IP
   message: {
     success: false,
     error: "Muitas requisições, tente novamente mais tarde",
@@ -153,8 +122,76 @@ const globalRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // ✅ CONFIGURAÇÃO CORRIGIDA - keyGenerator deve SEMPRE retornar string
+  keyGenerator: (req: express.Request): string => {
+    // Usar IP real quando behind proxy - SEMPRE retorna string
+    return req.ip || "unknown-ip";
+  },
+  skip: (req: express.Request): boolean => {
+    // Pular rate limiting para health checks
+    return req.path === "/health" || req.path === "/api/health";
+  },
 });
+
+// ✅ RATE LIMITING ESPECÍFICO PARA AUTH (MAIS RESTRITIVO) - TIPAGEM CORRIGIDA
+const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // 10 tentativas por IP para auth
+  message: {
+    success: false,
+    error: "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
+    code: "AUTH_RATE_LIMITED",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // ✅ CONFIGURAÇÃO CORRIGIDA - SEMPRE retorna string
+  keyGenerator: (req: express.Request): string => {
+    return req.ip || "unknown-ip";
+  },
+  skip: (req: express.Request): boolean => {
+    // Pular em desenvolvimento se necessário
+    return process.env.NODE_ENV === "development" && req.query.debug === "true";
+  },
+});
+
+// ✅ MIDDLEWARE CORS GLOBAL - APLICAR ANTES DE TUDO
+app.use(cors(corsOptions));
+
+// ✅ APLICAR RATE LIMITING GLOBAL
 app.use(globalRateLimit);
+
+// ✅ MIDDLEWARE PARA TRATAR REQUISIÇÕES OPTIONS (PREFLIGHT) GLOBALMENTE
+app.options("*", cors(corsOptions));
+
+// ✅ MIDDLEWARE PERSONALIZADO PARA HEADERS CORS
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  // Adicionar headers CORS para todas as respostas
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else if (origin && process.env.NODE_ENV === "development") {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-API-Key, X-Requested-With"
+  );
+
+  // ✅ TRATAR REQUISIÇÕES OPTIONS (PREFLIGHT) IMEDIATAMENTE
+  if (req.method === "OPTIONS") {
+    log.info("🛫 Preflight OPTIONS request para:", req.path);
+    return res.status(200).end();
+  }
+
+  next();
+});
 
 // Middlewares essenciais
 app.use(express.json({ limit: process.env.MAX_REQUEST_SIZE || "10mb" }));
@@ -188,7 +225,7 @@ app.use((req, res, next) => {
   log.info(`📨 ${req.method} ${req.path}`, {
     origin: req.headers.origin,
     ip: req.ip,
-    userAgent: req.headers['user-agent']?.substring(0, 50)
+    userAgent: req.headers["user-agent"]?.substring(0, 50),
   });
   next();
 });
@@ -201,12 +238,13 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
     version: "1.0.0",
+    trustProxy: app.get("trust proxy"),
     allowedOrigins: allowedOrigins,
     cors: {
       enabled: true,
       credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    }
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    },
   });
 });
 
@@ -214,7 +252,7 @@ app.get("/health", (req, res) => {
 app.get("/api/cors-info", (req, res) => {
   const origin = req.headers.origin;
   const isAllowed = origin ? allowedOrigins.includes(origin) : false;
-  
+
   res.status(200).json({
     success: true,
     data: {
@@ -222,8 +260,8 @@ app.get("/api/cors-info", (req, res) => {
       isAllowed: isAllowed,
       allowedOrigins: allowedOrigins,
       environment: process.env.NODE_ENV,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
@@ -236,8 +274,29 @@ app.post("/api/cors-test", (req, res) => {
       origin: req.headers.origin,
       method: req.method,
       body: req.body,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
+// 🎯 ENDPOINT PARA DEBUG DO PROXY/RATE LIMIT
+app.get("/api/debug/proxy-info", (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      ip: req.ip,
+      ips: req.ips,
+      originalIp: req.headers["x-forwarded-for"],
+      realIp: req.headers["x-real-ip"],
+      trustProxy: app.get("trust proxy"),
+      headers: {
+        "x-forwarded-for": req.headers["x-forwarded-for"],
+        "x-real-ip": req.headers["x-real-ip"],
+        "user-agent": req.headers["user-agent"]?.substring(0, 50),
+      },
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
@@ -314,6 +373,13 @@ app.get("/api/ping/users", async (req, res) => {
   }
 });
 
+// ✅ APLICAR RATE LIMITING ESPECÍFICO NAS ROTAS DE AUTH
+app.use("/api/Auth/check-email", authRateLimit);
+app.use("/api/auth/login", authRateLimit);
+app.use("/api/auth/register", authRateLimit);
+app.use("/api/otp/send", authRateLimit);
+app.use("/api/otp/verify", authRateLimit);
+
 // Prefixo /api para todas as rotas
 app.use("/", routes);
 
@@ -348,7 +414,18 @@ app.use(
         allowedOrigins: allowedOrigins,
         timestamp: new Date().toISOString(),
         code: "CORS_ERROR",
-        suggestion: "Verifique se a origem está na lista de origens permitidas"
+        suggestion: "Verifique se a origem está na lista de origens permitidas",
+      });
+    }
+
+    // ✅ TRATAMENTO ESPECÍFICO PARA RATE LIMITING
+    if (err.status === 429) {
+      return res.status(429).json({
+        success: false,
+        error: "Muitas requisições. Tente novamente mais tarde.",
+        timestamp: new Date().toISOString(),
+        code: "RATE_LIMIT_EXCEEDED",
+        retryAfter: "15 minutos",
       });
     }
 
