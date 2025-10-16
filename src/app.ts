@@ -4,7 +4,15 @@ import morgan from "morgan";
 import helmet from "helmet";
 import compression from "compression";
 import chalk from "chalk";
-import rateLimit from "express-rate-limit";
+
+// ✅ IMPORTAR RATE LIMITING DO ARQUIVO SEPARADO
+import {
+  apiRateLimit,
+  authRateLimit,
+  otpRateLimit,
+  emailCheckRateLimit,
+  rateLimitLogger,
+} from "./middleware/rate-limiting.middleware";
 
 // Importar rotas
 import routes from "./routes/index.route";
@@ -111,54 +119,14 @@ const corsOptions = {
   maxAge: 86400,
 };
 
-// ✅ RATE LIMITING CONFIGURADO CORRETAMENTE COM PROXY - TIPAGEM CORRIGIDA
-const globalRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limite de 100 requisições por IP
-  message: {
-    success: false,
-    error: "Muitas requisições, tente novamente mais tarde",
-    code: "RATE_LIMITED",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  // ✅ CONFIGURAÇÃO CORRIGIDA - keyGenerator deve SEMPRE retornar string
-  keyGenerator: (req: express.Request): string => {
-    // Usar IP real quando behind proxy - SEMPRE retorna string
-    return req.ip || "unknown-ip";
-  },
-  skip: (req: express.Request): boolean => {
-    // Pular rate limiting para health checks
-    return req.path === "/health" || req.path === "/api/health";
-  },
-});
-
-// ✅ RATE LIMITING ESPECÍFICO PARA AUTH (MAIS RESTRITIVO) - TIPAGEM CORRIGIDA
-const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10, // 10 tentativas por IP para auth
-  message: {
-    success: false,
-    error: "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
-    code: "AUTH_RATE_LIMITED",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  // ✅ CONFIGURAÇÃO CORRIGIDA - SEMPRE retorna string
-  keyGenerator: (req: express.Request): string => {
-    return req.ip || "unknown-ip";
-  },
-  skip: (req: express.Request): boolean => {
-    // Pular em desenvolvimento se necessário
-    return process.env.NODE_ENV === "development" && req.query.debug === "true";
-  },
-});
-
 // ✅ MIDDLEWARE CORS GLOBAL - APLICAR ANTES DE TUDO
 app.use(cors(corsOptions));
 
-// ✅ APLICAR RATE LIMITING GLOBAL
-app.use(globalRateLimit);
+// ✅ APLICAR RATE LIMITING GLOBAL (DO ARQUIVO SEPARADO)
+app.use(apiRateLimit);
+
+// ✅ APLICAR LOGGER DE RATE LIMITING
+app.use(rateLimitLogger);
 
 // ✅ MIDDLEWARE PARA TRATAR REQUISIÇÕES OPTIONS (PREFLIGHT) GLOBALMENTE
 app.options("*", cors(corsOptions));
@@ -244,6 +212,11 @@ app.get("/health", (req, res) => {
       enabled: true,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    },
+    rateLimiting: {
+      enabled: true,
+      environment: process.env.NODE_ENV,
+      config: "Ver /api/debug/rate-limit-info para detalhes",
     },
   });
 });
@@ -373,12 +346,12 @@ app.get("/api/ping/users", async (req, res) => {
   }
 });
 
-// ✅ APLICAR RATE LIMITING ESPECÍFICO NAS ROTAS DE AUTH
-app.use("/api/Auth/check-email", authRateLimit);
-app.use("/api/auth/login", authRateLimit);
-app.use("/api/auth/register", authRateLimit);
-app.use("/api/otp/send", authRateLimit);
-app.use("/api/otp/verify", authRateLimit);
+// ✅ APLICAR RATE LIMITING ESPECÍFICO NAS ROTAS (DO ARQUIVO SEPARADO)
+app.use("/api/Auth/check-email", emailCheckRateLimit); // ✅ MAIS PERMISSIVO
+app.use("/api/Auth/login", authRateLimit);
+app.use("/api/Auth/register", authRateLimit);
+app.use("/api/OTP/send", otpRateLimit);
+app.use("/api/OTP/verify", otpRateLimit);
 
 // Prefixo /api para todas as rotas
 app.use("/", routes);
