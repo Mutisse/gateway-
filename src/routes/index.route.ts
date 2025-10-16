@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import servicesRoutes from "./user-service.routes";
 import diagnosticRoutes from "./diagnostic.routes";
 import pingRoutes from "./ping.routes";
@@ -6,6 +6,7 @@ import testRoutes from "./test.routes";
 import authRoutes from "./auth.routes";
 import otpRoutes from "./otp.routes";
 import usersRoutes from "./users.routes";
+import analyticsRoutes from "./analytics.routes"; // ✅ IMPORTAR ANALYTICS ROUTES
 
 const router = Router();
 
@@ -13,13 +14,14 @@ const router = Router();
 router.use("/api/OTP", otpRoutes); // ✅ ROTAS OTP
 router.use("/api/Users", usersRoutes); // ✅ ROTAS USERS
 router.use("/api/Auth", authRoutes); // ✅ ROTAS AUTH
+router.use("/api/analytics", analyticsRoutes); // ✅ ROTAS ANALYTICS
 router.use("/api", servicesRoutes);
 router.use("/api", diagnosticRoutes);
 router.use("/api", pingRoutes);
 router.use("/api", testRoutes);
 
 // 🎯 HEALTH CHECK DA API (PÚBLICA)
-router.get("/api/health", (req, res) => {
+router.get("/api/health", (req: Request, res: Response) => {
   res.json({
     success: true,
     message: "API Gateway está funcionando",
@@ -28,13 +30,21 @@ router.get("/api/health", (req, res) => {
       timestamp: new Date().toISOString(),
       version: "1.0.0",
 
-      // ✅ ENDPOINTS ATUALIZADOS
+      // ✅ ENDPOINTS ATUALIZADOS COM ANALYTICS
       endpoints: {
         "🏠 Principais": {
           "❤️ Health": "/api/health",
           "🏠 Welcome": "/",
           "ℹ️ API Info": "/api/info",
           "📊 API Status": "/api/status",
+        },
+        "📈 Analytics": {
+          "📊 Dashboard": "/api/analytics/dashboard",
+          "🔧 Services Status": "/api/analytics/services/status",
+          "⚙️ Config": "/api/analytics/config",
+          "🌐 Public Routes": "/api/analytics/routes/public",
+          "❤️ Health": "/api/analytics/health",
+          "📊 Usage": "/api/analytics/usage",
         },
         "🩺 Diagnóstico Gateway": {
           "🔍 Gateway Status": "/api/diagnostic/gateway-status",
@@ -141,7 +151,7 @@ router.get("/api/health", (req, res) => {
 });
 
 // 🎯 INFO DA API (PÚBLICA)
-router.get("/api/info", (req, res) => {
+router.get("/api/info", (req: Request, res: Response) => {
   res.json({
     success: true,
     data: {
@@ -154,8 +164,8 @@ router.get("/api/info", (req, res) => {
       timestamp: new Date().toISOString(),
       architecture: "microservices",
       services: {
-        total: 6,
-        implemented: 1,
+        total: 7, // ✅ ATUALIZADO: agora inclui analytics
+        implemented: 2, // ✅ ATUALIZADO: auth + analytics
         in_development: 5,
       },
       features: {
@@ -163,6 +173,7 @@ router.get("/api/info", (req, res) => {
         user_management: true,
         otp_service: true,
         service_monitoring: true,
+        analytics: true, // ✅ NOVA FEATURE
         rate_limiting: true,
         cors_management: true,
       },
@@ -171,7 +182,7 @@ router.get("/api/info", (req, res) => {
 });
 
 // 🎯 STATUS DOS SERVIÇOS (PÚBLICA)
-router.get("/api/status", async (req, res) => {
+router.get("/api/status", async (req: Request, res: Response) => {
   try {
     let userServiceStatus = "offline";
 
@@ -202,6 +213,7 @@ router.get("/api/status", async (req, res) => {
         gateway: "running",
         services: {
           "auth-users-service": userServiceStatus,
+          "analytics-service": "online", // ✅ NOVO SERVIÇO
           "scheduling-service": "under_development",
           "employees-service": "under_development",
           "salons-service": "under_development",
@@ -224,7 +236,7 @@ router.get("/api/status", async (req, res) => {
 });
 
 // 🎯 ROTA DE BOAS-VINDAS
-router.get("/", (req, res) => {
+router.get("/", (req: Request, res: Response) => {
   res.json({
     success: true,
     message: "Bem-vindo ao BeautyTime Gateway API",
@@ -239,6 +251,7 @@ router.get("/", (req, res) => {
         "🚀 Começar": "/api/info",
         "❤️ Saúde": "/api/health",
         "📊 Status": "/api/status",
+        "📈 Analytics": "/api/analytics/dashboard",
         "🔐 Autenticação": "/api/Auth/login",
         "👤 User Service": "/api/user-service/health",
         "📱 OTP": "/api/OTP/send",
@@ -247,27 +260,5 @@ router.get("/", (req, res) => {
     },
   });
 });
-
-// Roteamento para Analytics Service - CENTRO DE INTELIGÊNCIA
-router.use('/analytics', createProxyMiddleware({
-  target: 'http://localhost:3004',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/analytics': '/api/analytics'
-  },
-  on: {
-    proxyReq: (proxyReq, req, res) => {
-      console.log(`📊 [GATEWAY] Roteando para Centro de Inteligência (Analytics): ${req.method} ${req.url}`);
-    },
-    error: (err, req, res) => {
-      console.error('❌ [GATEWAY] Erro ao conectar com Centro de Inteligência:', err.message);
-      res.status(503).json({
-        success: false,
-        error: 'Centro de Inteligência indisponível',
-        code: 'ANALYTICS_SERVICE_DOWN'
-      });
-    }
-  }
-}));
 
 export default router;
