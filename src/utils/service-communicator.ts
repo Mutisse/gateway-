@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { SERVICE_CONFIG } from "./config";
+import { SERVICE_CONFIG } from "../config/services.config";
 
 export interface ServiceResponse<T = any> {
   success: boolean;
@@ -67,7 +67,7 @@ export class ServiceCommunicator {
     }
   }
 
-  // 🎯 FAZER REQUISIÇÃO PARA SERVIÇO (método principal)
+  // 🎯 FAZER REQUISIÇÃO PARA SERVIÇO
   async request<T = any>(
     serviceName: string,
     options: {
@@ -143,22 +143,6 @@ export class ServiceCommunicator {
         details: errorInfo.details,
       };
     }
-  }
-
-  // ✅ NOVO MÉTODO: makeRequest (alias para request)
-  async makeRequest<T = any>(
-    serviceName: string,
-    endpoint: string,
-    method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
-    data?: any,
-    headers?: Record<string, string>
-  ): Promise<ServiceResponse<T>> {
-    return this.request<T>(serviceName, {
-      method,
-      endpoint,
-      data,
-      headers,
-    });
   }
 
   // 🎯 ANALISAR ERROS E RETORNAR INFORMAÇÕES CLARAS
@@ -332,17 +316,6 @@ export class ServiceCommunicator {
       endpoint,
       headers,
     });
-  }
-
-  // ✅ NOVO: MÉTODO ESPECÍFICO PARA CHECK-EMAIL
-  async checkEmail(
-    email: string
-  ): Promise<ServiceResponse<{ exists: boolean }>> {
-    return this.post<{ exists: boolean }>(
-      "AUTH_USERS_SERVICE",
-      "/auth/check-email",
-      { email }
-    );
   }
 }
 
