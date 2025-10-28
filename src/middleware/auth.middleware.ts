@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { httpClient } from '../utils/http-client';
+import { httpClient } from '../utils/';
 import { ROUTES_CONFIG } from '../config/services.config';
 
 export interface AuthenticatedRequest extends Request {
