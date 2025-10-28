@@ -18,9 +18,9 @@ const router = Router();
 // ✅ CONFIGURAÇÃO DOS SERVIÇOS (ATUALIZADA)
 const SERVICE_CONFIG = {
   AUTH_USERS_SERVICE:
-    process.env.AUTH_USERS_SERVICE_URL || "http://localhost:3001",
+    process.env.AUTH_USERS_SERVICE_URL || "https://auth-users-service.onrender.com",
   NOTIFICATIONS_SERVICE:
-    process.env.NOTIFICATIONS_SERVICE_URL || "http://localhost:3006",
+    process.env.NOTIFICATIONS_SERVICE_URL || "https://notifications-service-gfoy.onrender.com",
   SCHEDULING_SERVICE:
     process.env.SCHEDULING_SERVICE_URL || "http://localhost:3002",
   EMPLOYEES_SERVICE:

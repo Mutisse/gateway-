@@ -29,9 +29,9 @@ app.use(helmet());
 
 // ✅ 2. CORS (deve vir antes do body parsing)
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost:9000",
+  "https://beautytimeplatformapp.netlify.app",
+ // "http://localhost:5173",
+ // "http://localhost:9000",
 ];
 
 app.use(
