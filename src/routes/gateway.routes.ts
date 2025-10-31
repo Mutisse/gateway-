@@ -85,10 +85,10 @@ router.get(
 );
 
 // =============================================
-// 🔄 PROXY PARA TODOS OS SERVIÇOS (ATUALIZADO)
+// 🔄 PROXY PARA TODOS OS SERVIÇOS (ATUALIZADO COM ROLES)
 // =============================================
 
-// ✅ AUTH-USERS-SERVICE (ROTAS ATUALIZADAS)
+// ✅ AUTH-USERS-SERVICE (ROTAS ATUALIZADAS COM ROLES)
 router.use("/auth", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
 router.use("/clients", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
 router.use("/employees", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
@@ -98,6 +98,8 @@ router.use("/verify", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
 router.use("/cleanup", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
 router.use("/profile", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
 router.use("/users", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
+// ✅ NOVO - ROTAS DE ROLE MANAGEMENT
+router.use("/roles", createSimpleProxy(SERVICE_CONFIG.AUTH_USERS_SERVICE));
 
 // ✅ NOTIFICATION SERVICE (ROTAS ATUALIZADAS)
 router.use(
@@ -202,7 +204,7 @@ router.get("/", (req: Request, res: Response) => {
     service: "API Gateway",
     status: "running",
     timestamp: new Date().toISOString(),
-    version: "2.5.0",
+    version: "2.6.0", // ✅ Atualizada
     features: [
       "simple_proxy_routing",
       "service_discovery",
@@ -211,6 +213,7 @@ router.get("/", (req: Request, res: Response) => {
       "integrated_logging_service",
       "rollback_system_support",
       "advanced_diagnostics",
+      "role_management_system", // ✅ NOVO
     ],
     diagnostic_endpoints: [
       "/diagnostics/full",
@@ -230,13 +233,14 @@ router.get("/health", (req: Request, res: Response) => {
     service: "Gateway",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
-    version: "2.5.0",
+    version: "2.6.0", // ✅ Atualizada
     integrated_features: [
       "logging",
       "error_tracking",
       "metrics_dashboard",
       "rollback_system",
       "diagnostics_system",
+      "role_management", // ✅ NOVO
     ],
   });
 });
@@ -247,13 +251,13 @@ router.get("/status", async (req: Request, res: Response) => {
   res.json({
     gateway: "RUNNING",
     timestamp: new Date().toISOString(),
-    version: "2.5.0",
+    version: "2.6.0", // ✅ Atualizada
     diagnostic: quickDiagnostic,
   });
 });
 
 // =============================================
-// ❌ 404 HANDLER (ATUALIZADO)
+// ❌ 404 HANDLER (ATUALIZADO COM ROTAS DE ROLE)
 // =============================================
 
 router.use((req: Request, res: Response) => {
@@ -273,7 +277,7 @@ router.use((req: Request, res: Response) => {
     user_message: errorInfo.user_message,
     debug_info: errorInfo.debug_info,
     timestamp: new Date().toISOString(),
-    gateway_version: "2.5.0",
+    gateway_version: "2.6.0", // ✅ Atualizada
     correlation_id: req.headers["x-correlation-id"] || "none",
     available_endpoints: [
       // 🆕 DIAGNÓSTICOS
@@ -283,6 +287,19 @@ router.use((req: Request, res: Response) => {
       "GET /diagnostics/stats",
       "GET /diagnostics/dependencies",
       "GET /diagnostics/service/:serviceName",
+
+      // 👑 ROLE MANAGEMENT (NOVO)
+      "GET /roles",
+      "GET /roles/class/:class",
+      "GET /roles/code/:code", 
+      "GET /roles/id/:id",
+      "GET /roles/:code/permissions",
+      "GET /roles/hierarchy/all",
+      "POST /roles/check-permission",
+      "POST /roles/validate-code",
+      "POST /roles (admin)",
+      "PUT /roles/:id (admin)",
+      "DELETE /roles/:id (admin)",
 
       // 🔐 AUTH & USERS
       "POST /auth/login",
